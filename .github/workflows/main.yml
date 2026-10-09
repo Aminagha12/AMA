@@ -1,0 +1,77 @@
+name: Build Forex Robot APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Code Download ──
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js Setup ──
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Java Setup (Android لپاره) ──
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ── 4. د Binance API Keys inject کول ──
+      - name: Create .env file
+        run: |
+          echo "VITE_BINANCE_API_KEY=${{ secrets.VITE_BINANCE_API_KEY }}" >> .env
+          echo "VITE_BINANCE_SECRET_KEY=${{ secrets.VITE_BINANCE_SECRET_KEY }}" >> .env
+
+      # ── 5. npm Install ──
+      - name: Install dependencies
+        run: npm install
+
+      # ── 6. Robot image copy ──
+      - name: Copy robot image
+        run: |
+          mkdir -p src/assets
+          if [ -f "src/assets/robot.jpg" ]; then
+            echo "Image exists"
+          else
+            echo "WARNING: src/assets/robot.jpg not found"
+          fi
+
+      # ── 7. Vite Build ──
+      - name: Build web app
+        run: npm run build
+
+      # ── 8. Capacitor Android اضافه کول ──
+      - name: Add Android platform
+        run: |
+          npx cap add android || echo "Android already added"
+          npx cap sync android
+
+      # ── 9. Gradle permission ──
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      # ── 10. APK Build ──
+      - name: Build debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon
+
+      # ── 11. APK Upload (Download لپاره) ──
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForexRobotSignalBot-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
