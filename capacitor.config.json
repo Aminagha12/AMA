@@ -1,0 +1,18 @@
+{
+  "appId": "com.hamidi.forexrobot",
+  "appName": "Forex Robot Signal Bot",
+  "webDir": "dist",
+  "android": {
+    "buildOptions": {
+      "keystorePath": null,
+      "keystorePassword": null,
+      "keystoreAlias": null,
+      "keystoreAliasPassword": null,
+      "releaseType": "APK"
+    }
+  },
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  }
+}
